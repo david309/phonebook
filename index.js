@@ -7,7 +7,7 @@ const app = express();
 const Person = require('./models/person');
 
 app.use(cors());
-// app.use(express.static('build'));
+app.use(express.static('build'));
 
 // Persons
 

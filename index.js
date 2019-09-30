@@ -6,12 +6,9 @@ const cors = require('cors');
 const app = express();
 const Person = require('./models/person');
 
+// Middleware
 app.use(cors());
 app.use(express.static('build'));
-
-// Persons
-
-// Middleware
 app.use(bodyParser.json());
 
 // create a new morgan token
@@ -54,17 +51,11 @@ app.get('/api/persons/:id', (req, res) => {
     })
     .catch(error => {
       console.log(error);
-      res.status(404).end();
+      res.status(404).json({ error: '404 not found' });
     });
 });
 
-// POST requests
-//// Generate an ID
-// const generateId = () => {
-//   const maxId = persons.length > 0 ? Math.max(...persons.map(p => p.id)) : 0;
-//   return maxId + 1;
-// };
-
+// adds a person to the database
 app.post('/api/persons', (req, res) => {
   const body = req.body;
 
@@ -84,47 +75,55 @@ app.post('/api/persons', (req, res) => {
   });
 });
 
-// //// Adds a single person
-// app.post('/api/persons', (req, res) => {
-//   const body = req.body;
-
-//   // if name or number is missing, return an error
-//   if (!body.name || !body.number) {
-//     return res.status(400).json({
-//       error: 'name and number must exist'
-//     });
-//   }
-
-//   // if name already exists, return an error
-//   const nameExists = persons.find(p => p.name === body.name);
-//   if (nameExists) {
-//     return res.status(400).json({
-//       error: 'name must be unique'
-//     });
-//   }
-
-//   // create a new person object with info from request
-//   const person = {
-//     name: body.name,
-//     number: body.number,
-//     display: true,
-//     date: new Date(),
-//     id: generateId()
-//   };
-
-//   // update the persons array and return the added user
-//   persons = persons.concat(person);
-//   res.json(person);
-// });
-
 // DELETE requests
 
 //// Delete a single user
-// app.delete('/api/persons/:id', (req, res) => {
-//   const id = Number(req.params.id);
-//   persons = persons.filter(p => p.id !== id);
-//   res.status(204).end();
+app.delete('/api/persons/:id', (req, res, next) => {
+  Person.findByIdAndRemove(req.params.id)
+    .then(result => {
+      res.status(204).end();
+    })
+    .catch(error => {
+      console.log(error);
+      res.status(404).end();
+    });
+});
+
+// PUT request
+
+// app.put('/api/notes/:id', (request, response, next) => {
+//   const body = request.body;
+
+//   const note = {
+//     content: body.content,
+//     important: body.important
+//   };
+
+//   Note.findByIdAndUpdate(request.params.id, note, { new: true })
+//     .then(updatedNote => {
+//       response.json(updatedNote.toJSON());
+//     })
+//     .catch(error => next(error));
 // });
+
+app.put('/api/persons/:id', (req, res) => {
+  const body = req.body;
+
+  const person = {
+    name: body.name,
+    number: body.number,
+    display: true
+  };
+
+  Person.findByIdAndUpdate(req.params.id, person, { new: true })
+    .then(updatedPerson => {
+      res.json(updatedPerson.toJSON());
+    })
+    .catch(error => {
+      console.log(error);
+      res.status(404).end();
+    });
+});
 
 // Dealing with unknown endpoints
 const unknownEndpoint = (request, response) => {
